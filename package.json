@@ -1,0 +1,22 @@
+{
+  "name": "apex-overdrive-fps-booster",
+  "version": "1.0.0",
+  "description": "High-End FPS & Low-Latency Kernel Gaming Booster Suite with Real-Time Diagrammatic Telemetry",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "keywords": [
+    "fps-boost",
+    "latency-optimizer",
+    "tcp-optimizer",
+    "memory-cleaner",
+    "gaming-hud"
+  ],
+  "author": "Apex Overdrive Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}

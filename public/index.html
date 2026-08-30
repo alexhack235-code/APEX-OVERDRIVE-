@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APEX OVERDRIVE // ULTRA LOW-LATENCY & FPS KERNEL BOOSTER</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body class="cyber-theme">
+    <div class="scanline-overlay"></div>
+    <div class="grid-bg"></div>
+
+    <div class="hud-container">
+        <!-- TOP HEADER BAR -->
+        <header class="hud-header">
+            <div class="logo-area">
+                <div class="cyber-glitch-logo">
+                    <span class="logo-glitch" data-text="APEX OVERDRIVE">APEX OVERDRIVE</span>
+                    <span class="sub-logo">UNIVERSAL LINUX + WINDOWS // DEEP RUST KERNEL GAMING SUITE</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="wsStatus">KERNEL LINK: CONNECTED</span>
+                </div>
+                <div class="timer-badge" id="timerBadge">
+                    <span class="timer-dot"></span>
+                    <span id="timerText">TIMER: 0.500ms (ULTRA)</span>
+                </div>
+                <button id="soundToggleBtn" class="cyber-btn-small" title="Toggle Tactical Audio FX">
+                    <span id="soundIcon">🔊 SFX ON</span>
+                </button>
+                <button id="btnExportReport" class="cyber-btn-small" title="Export Latency & FPS Benchmark Diagnostic Report">
+                    📥 EXPORT REPORT
+                </button>
+                <button id="restoreBtn" class="cyber-btn-danger-outline" title="Reset all OS settings to stock defaults">
+                    ↺ RESTORE DEFAULTS
+                </button>
+            </div>
+        </header>
+
+        <!-- DUMMY-PROOF 1-CLICK PRESETS BANNER -->
+        <section class="presets-section">
+            <div class="presets-header">
+                <span class="presets-label">⚡ 1-CLICK INSTANT PRO PRESETS (AUTO-ENGAGES ENTIRE ENGINE):</span>
+                <span class="presets-hint">Click any preset to automatically run the full pipeline with zero setup</span>
+            </div>
+            <div class="presets-grid">
+                <button class="preset-card preset-pro" id="btnPresetPro">
+                    <div class="preset-glow"></div>
+                    <div class="preset-badge">MAX COMPETITIVE</div>
+                    <div class="preset-icon">🏆</div>
+                    <div class="preset-title">ESPORTS TOURNAMENT PRO</div>
+                    <div class="preset-desc">Full Rust 0.5ms Timer + Max CPU Quantum + Input Zero-Delay + RAM Purge</div>
+                </button>
+
+                <button class="preset-card preset-fps" id="btnPresetFps">
+                    <div class="preset-badge">STABLE FRAMES</div>
+                    <div class="preset-icon">🚀</div>
+                    <div class="preset-title">STABLE HIGH FPS GAMER</div>
+                    <div class="preset-desc">CPU Core Unparking + GPU DWM Silencer + NVMe TRIM + Working-Set Trim</div>
+                </button>
+
+                <button class="preset-card preset-ping" id="btnPresetPing">
+                    <div class="preset-badge">LOWEST MS</div>
+                    <div class="preset-icon">🌐</div>
+                    <div class="preset-title">ZERO-PING & JITTER KILLER</div>
+                    <div class="preset-desc">TCP BBR + Fair Queueing (FQ) + DNS Optimization + Zero Delayed ACKs</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- 1-CLICK GAME TITLE LAUNCHPAD -->
+        <section class="game-launchpad-section">
+            <div class="presets-header">
+                <span class="presets-label">🎮 1-CLICK GAME-SPECIFIC PROFILES (TAILORED KERNEL TUNING):</span>
+                <span class="presets-hint">Applies custom engine flags tailored specifically for your game title</span>
+            </div>
+            <div class="launchpad-grid">
+                <button class="launch-card blood-card" onclick="applyGamePreset('bloodstrike')">
+                    <span class="launch-icon">🩸</span>
+                    <span class="launch-name">BLOOD STRIKE</span>
+                    <span class="launch-meta">0.5ms Timer + 0ms WASD</span>
+                </button>
+                <button class="launch-card codm-card" onclick="applyGamePreset('codm')">
+                    <span class="launch-icon">🎖️</span>
+                    <span class="launch-name">CODM / GAMELOOP</span>
+                    <span class="launch-meta">VT-x Unpark + RAM Purge</span>
+                </button>
+                <button class="launch-card val-card" onclick="applyGamePreset('valorant')">
+                    <span class="launch-icon">🎯</span>
+                    <span class="launch-name">VALORANT</span>
+                    <span class="launch-meta">Raw Input + Vanguard Lock</span>
+                </button>
+                <button class="launch-card cs2-card" onclick="applyGamePreset('cs2')">
+                    <span class="launch-icon">💣</span>
+                    <span class="launch-name">COUNTER-STRIKE 2</span>
+                    <span class="launch-meta">0.5ms Subtick Pacing</span>
+                </button>
+                <button class="launch-card fn-card" onclick="applyGamePreset('fortnite')">
+                    <span class="launch-icon">⚡</span>
+                    <span class="launch-name">FORTNITE</span>
+                    <span class="launch-meta">Chaos Physics + NVMe TRIM</span>
+                </button>
+                <button class="launch-card apex-card" onclick="applyGamePreset('apex')">
+                    <span class="launch-icon">🔥</span>
+                    <span class="launch-name">APEX / WARZONE</span>
+                    <span class="launch-meta">Spatial Audio + Shader Flush</span>
+                </button>
+                <button class="launch-card rbx-card" onclick="applyGamePreset('roblox')">
+                    <span class="launch-icon">🧱</span>
+                    <span class="launch-name">ROBLOX / MINECRAFT</span>
+                    <span class="launch-meta">Heap GC + Standby Purge</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- DUAL ENGINE SELECTOR -->
+        <section class="engine-selector-card">
+            <div class="selector-header">
+                <span class="selector-label">MANUAL ENGINE SELECTOR:</span>
+                <span class="selector-hint">Toggle between Standard App tuning or Deep Rust OS-level kernel overrides</span>
+            </div>
+            <div class="engine-tabs">
+                <button class="engine-tab" id="tabStandard" data-mode="standard">
+                    <div class="tab-icon">🚀</div>
+                    <div class="tab-info">
+                        <span class="tab-title">MODE 1: STANDARD OVERDRIVE</span>
+                        <span class="tab-desc">PowerShell, MMCSS & Registry Tweaks (Safe & Fast)</span>
+                    </div>
+                </button>
+                <button class="engine-tab active deep-rust" id="tabRust" data-mode="rust">
+                    <div class="tab-glow"></div>
+                    <div class="tab-icon">🔥</div>
+                    <div class="tab-info">
+                        <div class="tab-title-row">
+                            <span class="tab-title">MODE 2: DEEP RUST KERNEL OVERDRIVE</span>
+                            <span class="hot-badge">CRAZY GAINS</span>
+                        </div>
+                        <span class="tab-desc">NTDLL 0.5ms Timer + Native Memory Purge + Win32 Quantum 0x28</span>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- HERO OVERDRIVE COMMAND CENTER -->
+        <section class="hero-command-card rust-active" id="heroCard">
+            <div class="hero-left">
+                <div class="hero-tag" id="engineTag">🔥 DEEP RUST KERNEL OS-LEVEL ACCELERATION</div>
+                <h1 class="hero-title" id="heroTitle">UNLEASH CRAZY IN-GAME FPS & SUB-MILLISECOND LATENCY</h1>
+                <p class="hero-desc" id="heroDesc">
+                    Bypasses standard Windows/Linux queue bottlenecks using direct NTDLL/libc syscalls (0.500ms Timer, Standby Purge, Win32 High Quantum 40, and TCP BBR/NoDelay).
+                </p>
+                <div class="hero-actions">
+                    <button id="overdriveBoostBtn" class="overdrive-master-btn deep-rust-btn">
+                        <span class="btn-shine"></span>
+                        <span class="btn-content">
+                            <span class="btn-bolt">⚡</span>
+                            <span class="btn-text" id="overdriveBtnText">🔥 ENGAGE DEEP RUST KERNEL OVERDRIVE 🔥</span>
+                        </span>
+                    </button>
+                    <div id="boostProgressBar" class="boost-progress-bar hidden">
+                        <div class="progress-fill" id="progressFill"></div>
+                        <span class="progress-text" id="progressText">APPLYING OS KERNEL OVERDRIVE...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-right">
+                <div class="latency-score-gauge">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 120 120" class="gauge-svg">
+                            <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                            <circle id="scoreProgressCircle" class="gauge-bar" cx="60" cy="60" r="50"></circle>
+                        </svg>
+                        <div class="gauge-inner">
+                            <span id="scoreValue" class="score-number">--</span>
+                            <span class="score-label">FPS INDEX</span>
+                        </div>
+                    </div>
+                    <div class="gauge-caption">SYSTEM RESPONSIVENESS</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FPS & FRAME PACING BENCHMARK SIMULATOR -->
+        <section class="benchmark-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-icon">📊</span>
+                    <span>REAL-TIME FPS & FRAME PACING LATENCY BENCHMARK</span>
+                </div>
+                <button id="btnStartBenchmark" class="cyber-btn-action-sm">⚡ START 10-SEC STRESS TEST</button>
+            </div>
+            <div class="card-body">
+                <div class="bench-stats-row">
+                    <div class="stat-box">
+                        <span class="stat-label">AVERAGE FPS</span>
+                        <span class="stat-val glow-green" id="benchAvgFps">-- FPS</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">1% LOW FPS</span>
+                        <span class="stat-val glow-cyan" id="bench1Low">-- FPS</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">0.1% LOW FPS (MICRO-STUTTER)</span>
+                        <span class="stat-val glow-magenta" id="bench01Low">-- FPS</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">FRAME TIME JITTER</span>
+                        <span class="stat-val glow-amber" id="benchFrameTime">-- ms</span>
+                    </div>
+                </div>
+                <div class="canvas-container" style="height: 90px; margin-top: 10px;">
+                    <canvas id="benchCanvas" width="800" height="90"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- PER-CORE REAL-TIME CPU HEATMAP -->
+        <section class="cpu-matrix-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-icon">⚡</span>
+                    <span>PER-CORE CPU HEATMAP & REAL-TIME CLOCK FREQUENCIES</span>
+                </div>
+                <div class="core-unpark-status">
+                    <span class="unpark-dot active"></span>
+                    <span id="coreStatusText">ALL CORES UNPARKED (100% FREQUENCY BOOST)</span>
+                </div>
+            </div>
+            <div class="cpu-cores-grid" id="cpuCoresGrid">
+                <!-- Dynamically populated per core -->
+            </div>
+        </section>
+
+        <!-- 4-GRID DIAGRAMMATIC TELEMETRY MATRIX -->
+        <section class="telemetry-grid">
+            
+            <!-- MODULE 1: NETWORK & PING DIAGRAM -->
+            <div class="telemetry-card net-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🌐</span>
+                        <span>NETWORK & PING OSCILLOSCOPE</span>
+                    </div>
+                    <div class="card-badge" id="netNodeBadge">NODE: 1.1.1.1</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">PING LATENCY</span>
+                            <span class="stat-val glow-cyan" id="pingMsVal">-- ms</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">JITTER DELTA</span>
+                            <span class="stat-val glow-amber" id="jitterMsVal">-- ms</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">SECONDARY NODE</span>
+                            <span class="stat-val" id="secondaryPingVal">-- ms</span>
+                        </div>
+                    </div>
+                    
+                    <div class="canvas-container">
+                        <canvas id="pingCanvas" width="400" height="110"></canvas>
+                    </div>
+
+                    <div class="card-actions">
+                        <button id="btnOptNetwork" class="module-action-btn">
+                            ⚡ OPTIMIZE TCP NODELAY & DNS
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 2: RAM & MEMORY ANATOMY -->
+            <div class="telemetry-card mem-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🧠</span>
+                        <span>RAM & STANDBY MEMORY PURGER</span>
+                    </div>
+                    <div class="card-badge" id="memUsageBadge">--% IN USE</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">TOTAL MEMORY</span>
+                            <span class="stat-val glow-cyan" id="memTotalVal">-- GB</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">USED WORKING SET</span>
+                            <span class="stat-val glow-magenta" id="memUsedVal">-- GB</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">FREE MEMORY</span>
+                            <span class="stat-val glow-green" id="memFreeVal">-- GB</span>
+                        </div>
+                    </div>
+
+                    <div class="memory-bar-wrapper">
+                        <div class="memory-bar">
+                            <div id="memUsedBar" class="mem-segment used" style="width: 50%;"></div>
+                            <div id="memFreeBar" class="mem-segment free" style="width: 50%;"></div>
+                        </div>
+                        <div class="mem-legend">
+                            <span><i class="dot dot-used"></i> Active Apps</span>
+                            <span><i class="dot dot-free"></i> Free Physical RAM</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions flex-row-actions">
+                        <button id="btnPurgeMem" class="module-action-btn">
+                            🧹 PURGE STANDBY (NTDLL SYSCALL)
+                        </button>
+                        <button id="btnToggleAutoClean" class="cyber-btn-auto-clean">
+                            <span id="autoCleanIcon">🤖 AUTO-CLEAN: OFF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 3: STORAGE & NVMe / SSD IO -->
+            <div class="telemetry-card disk-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">💾</span>
+                        <span>STORAGE & NVMe/SSD ACCELERATOR</span>
+                    </div>
+                    <div class="card-badge" id="storageNameBadge">C: DRIVE</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">TOTAL CAPACITY</span>
+                            <span class="stat-val glow-cyan" id="diskTotalVal">-- GB</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">USED SPACE</span>
+                            <span class="stat-val glow-amber" id="diskUsedVal">-- GB</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">FREE SPACE</span>
+                            <span class="stat-val glow-green" id="diskFreeVal">-- GB</span>
+                        </div>
+                    </div>
+
+                    <div class="storage-bar-wrapper">
+                        <div class="storage-bar">
+                            <div id="diskUsedBar" class="storage-fill" style="width: 40%;"></div>
+                        </div>
+                        <div class="storage-meta">
+                            <span id="diskPercentText">--% Used</span>
+                            <span class="opt-tag">TRIM ENABLED</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button id="btnOptStorage" class="module-action-btn">
+                            🚀 TRIGGER NVMe TRIM & DISK TUNING
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 4: CPU & KERNEL SCHEDULER -->
+            <div class="telemetry-card cpu-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">⚡</span>
+                        <span>CPU & KERNEL SCHEDULER</span>
+                    </div>
+                    <div class="card-badge" id="cpuLoadBadge">--% LOAD</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">CPU USAGE</span>
+                            <span class="stat-val glow-cyan" id="cpuUsageVal">--%</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">CORES / THREADS</span>
+                            <span class="stat-val glow-green" id="cpuCoresVal">--</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">POWER SCHEME</span>
+                            <span class="stat-val glow-magenta" id="powerSchemeVal">ULTIMATE</span>
+                        </div>
+                    </div>
+
+                    <div class="cpu-info-box">
+                        <span class="cpu-model-text" id="cpuModelVal">Detecting Processor...</span>
+                        <div class="core-unpark-status">
+                            <span class="unpark-dot active"></span>
+                            <span>CORE PARKING BYPASS: ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button id="btnOptCpu" class="module-action-btn">
+                            ⚙️ UNPARK CORES & BOOST SCHEDULER
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- GAMER ARSENAL SUITE -->
+        <section class="arsenal-grid">
+            
+            <!-- TOOL 1: 1-CLICK FASTEST DNS BENCHMARK & SWITCHER -->
+            <div class="sub-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🌐</span>
+                        <span>GLOBAL DNS & GAMING SERVER LEADERBOARD</span>
+                    </div>
+                    <button id="btnRunDnsBenchmark" class="cyber-btn-xs">⚡ BENCHMARK ALL</button>
+                </div>
+                <div class="card-body">
+                    <p class="sub-desc">Tests lowest round-trip latency to global DNS resolvers & sets the fastest 1-click default.</p>
+                    <div class="dns-table-wrapper">
+                        <table class="dns-table" id="dnsTable">
+                            <thead>
+                                <tr>
+                                    <th>PROVIDER / CLUSTER</th>
+                                    <th>IP ADDRESS</th>
+                                    <th>LATENCY</th>
+                                    <th>ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dnsTableBody">
+                                <tr><td colspan="4" style="text-align:center;">Click 'Benchmark All' to test global resolvers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOL 2: ZERO INPUT DELAY & SHADER CLEANER -->
+            <div class="sub-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">⌨️</span>
+                        <span>INPUT LATENCY & GPU SHADER CACHE PURGER</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="sub-desc">Removes keyboard repeat latency, clears DirectX/Vulkan shader caches to stop map stutters, and silences notifications.</p>
+                    <div class="toggle-list">
+                        <div class="toggle-item">
+                            <span>Instant Keyboard Delay (0ms) + FilterKeys</span>
+                            <button id="btnTweakInput" class="cyber-btn-xs glow-btn">ENGAGE</button>
+                        </div>
+                        <div class="toggle-item">
+                            <span>MMCSS Spatial Audio Footstep DSP Buffer Tuning</span>
+                            <button id="btnTweakAudio" class="cyber-btn-xs glow-btn">ENGAGE</button>
+                        </div>
+                        <div class="toggle-item">
+                            <span>Purge DirectX & GPU Shader Stutter Caches</span>
+                            <button id="btnCleanShaders" class="cyber-btn-xs glow-btn">PURGE CACHES</button>
+                        </div>
+                        <div class="toggle-item">
+                            <span>Gamer Do Not Disturb (Silence All Windows Toasts)</span>
+                            <button id="btnToggleDND" class="cyber-btn-xs">TOGGLE DND</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOL 3: PRO IN-GAME CROSSHAIR OVERLAY GENERATOR -->
+            <div class="sub-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🎯</span>
+                        <span>PRO IN-GAME CROSSHAIR GENERATOR</span>
+                    </div>
+                    <button id="btnToggleCrosshair" class="cyber-btn-xs">TOGGLE OVERLAY</button>
+                </div>
+                <div class="card-body">
+                    <p class="sub-desc">Custom HUD crosshair generator for hipfire accuracy and zero noscope spread in FPS titles.</p>
+                    <div class="crosshair-designer-row">
+                        <div class="crosshair-preview-box">
+                            <canvas id="crosshairCanvas" width="100" height="100"></canvas>
+                        </div>
+                        <div class="crosshair-controls">
+                            <div class="control-group">
+                                <label>Color:</label>
+                                <input type="color" id="crosshairColor" value="#00ff66">
+                            </div>
+                            <div class="control-group">
+                                <label>Size:</label>
+                                <input type="range" id="crosshairSize" min="2" max="25" value="8">
+                            </div>
+                            <div class="control-group">
+                                <label>Gap:</label>
+                                <input type="range" id="crosshairGap" min="0" max="20" value="4">
+                            </div>
+                            <div class="control-group">
+                                <label>Dot:</label>
+                                <input type="checkbox" id="crosshairDot" checked>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOOL 4: GAME PROCESS PRIORITY LOCKER -->
+            <div class="sub-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🎮</span>
+                        <span>RUNNING GAME PRIORITY LOCKER & LAUNCHPAD</span>
+                    </div>
+                    <button id="btnRefreshGames" class="cyber-btn-xs">↻ REFRESH</button>
+                </div>
+                <div class="card-body">
+                    <p class="sub-desc">Lock active game processes to High/Realtime CPU Priority and High I/O priority for zero frame stutter.</p>
+                    
+                    <div class="game-selector-row">
+                        <select id="gameProcessSelect" class="cyber-select">
+                            <option value="">-- Scan / Select Running Game --</option>
+                        </select>
+                        <select id="prioritySelect" class="cyber-select-sm">
+                            <option value="High">Priority: HIGH</option>
+                            <option value="RealTime">Priority: REALTIME</option>
+                        </select>
+                        <button id="btnLockGamePriority" class="cyber-btn-action">LOCK</button>
+                    </div>
+
+                    <div class="custom-exe-row">
+                        <input type="text" id="customProcessInput" class="cyber-input" placeholder="Or enter custom process (e.g. cs2.exe, valorant.exe)">
+                        <button id="btnLockCustomPriority" class="cyber-btn-action-sm">BOOST CUSTOM</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- LIVE TACTICAL TERMINAL / LOG CONSOLE -->
+        <section class="console-section">
+            <div class="console-header">
+                <div class="console-title">
+                    <span class="term-dot"></span>
+                    <span>APEX KERNEL DIAGNOSTICS LOG</span>
+                </div>
+                <button id="btnClearLog" class="cyber-btn-xs">CLEAR LOG</button>
+            </div>
+            <div class="console-window" id="consoleWindow">
+                <div class="log-line info">[SYSTEM INIT] Apex Overdrive Engine initialized. Ready for kernel telemetry.</div>
+                <div class="log-line success">[KERNEL READY] Standby memory purger, 0.500ms Timer, TCP BBR/NoDelay, Core unparking armed.</div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="hud-footer">
+            <span>APEX OVERDRIVE // HIGH-END LOW-LATENCY GAMING ENGINE</span>
+            <span>SYSTEM ENHANCED FOR MAXIMUM FPS & MINIMUM INPUT DELAY</span>
+        </footer>
+    </div>
+
+    <!-- On-screen Crosshair Overlay element -->
+    <div id="screenCrosshairOverlay" class="screen-crosshair hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

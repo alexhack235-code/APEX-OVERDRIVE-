@@ -1,0 +1,17 @@
+{
+  "networkThrottling": 10,
+  "systemResponsiveness": 20,
+  "gameDVR": 1,
+  "tcpAckFrequency": 0,
+  "tcpDelAckTicks": 0,
+  "activePowerScheme": "381b4222-f694-41f0-9685-ff5bb260df2e",
+  "appliedTweaks": [
+    "memory",
+    "network",
+    "cpu",
+    "storage",
+    "gpu"
+  ],
+  "timestamp": "2026-08-27T22:04:52.528Z",
+  "lastUpdated": "2026-08-27T22:06:19.401Z"
+}

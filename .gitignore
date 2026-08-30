@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+
+# Rust build outputs
+rust_core/target/
+rust_core/Cargo.lock
+target/
+
+# Installers & temporary binaries
+rustup-init.exe
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
