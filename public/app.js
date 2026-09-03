@@ -830,34 +830,242 @@ restoreBtn.addEventListener('click', async () => {
     }
 });
 
-// Export Benchmark Diagnostic Report
+// Export Benchmark Diagnostic Report — Rich Visual HTML
 btnExportReport.addEventListener('click', () => {
     playSound('click');
     if (!latestTelemetry) {
         alert('Telemetry data is still loading...');
         return;
     }
-    const report = {
-        title: "APEX OVERDRIVE // GAMING HARDWARE & LATENCY BENCHMARK REPORT",
-        timestamp: new Date().toISOString(),
-        os: latestTelemetry.os,
-        timer_resolution: timerText.textContent,
-        fps_index_score: latestTelemetry.latencyIndex,
-        cpu: latestTelemetry.cpu,
-        memory: latestTelemetry.memory,
-        storage: latestTelemetry.storage,
-        network: latestTelemetry.network,
-        recommendation: "System tuned for zero frame drops, sub-millisecond input response, and low ping."
-    };
 
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const t = latestTelemetry;
+    const ts = new Date().toISOString();
+    const score = t.latencyIndex || 0;
+    const ping = t.network ? t.network.pingMs : '--';
+    const jitter = t.network ? t.network.jitterMs : '--';
+    const cpuPct = t.cpu ? t.cpu.usagePercent : 0;
+    const cpuModel = t.cpu ? t.cpu.model : 'Unknown';
+    const cpuCores = t.cpu ? t.cpu.cores : '--';
+    const memPct = t.memory ? t.memory.percent : 0;
+    const memUsed = t.memory ? t.memory.usedGB : '--';
+    const memTotal = t.memory ? t.memory.totalGB : '--';
+    const diskPct = t.storage ? t.storage.usedPercent : 0;
+    const diskUsed = t.storage ? t.storage.usedGB : '--';
+    const diskTotal = t.storage ? t.storage.totalGB : '--';
+    const batPct = t.battery ? t.battery.percent : null;
+    const batStatus = t.battery ? t.battery.statusText : null;
+    const batPower = t.battery ? t.battery.powerLine : null;
+    const gpuName = t.gpu ? t.gpu.name : null;
+    const gpuDriver = t.gpu ? t.gpu.driverVersion : null;
+    const gpuVram = t.gpu ? t.gpu.vramMB : null;
+    const timerStr = timerText.textContent;
+    const osName = t.os || 'Unknown';
+
+    // Build ping sparkline SVG from telemetryHistory
+    let pingSvgPath = '';
+    let pingAreaPath = '';
+    if (telemetryHistory.length > 1) {
+        const maxP = Math.max(60, ...telemetryHistory.map(d => d.ping));
+        const w = 440, h = 60;
+        const step = w / (telemetryHistory.length - 1);
+        let pts = telemetryHistory.map((d, i) => {
+            const x = i * step;
+            const y = h - (d.ping / maxP) * (h - 8) - 4;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        pingSvgPath = `<polyline points="${pts.join(' ')}" fill="none" stroke="#00f3ff" stroke-width="2"/>`;
+        pingAreaPath = `<polygon points="0,${h} ${pts.join(' ')} ${((telemetryHistory.length - 1) * step).toFixed(1)},${h}" fill="url(#pingGrad)" opacity="0.4"/>`;
+    }
+
+    // Build battery sparkline SVG from batteryChartHistory
+    let batSvgPath = '';
+    let batAreaPath = '';
+    if (batteryChartHistory.length > 1) {
+        const w = 440, h = 60;
+        const step = w / (batteryChartHistory.length - 1);
+        let pts = batteryChartHistory.map((d, i) => {
+            const x = i * step;
+            const y = h - (d.percent / 100) * (h - 8) - 4;
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        const col = batPct > 50 ? '#00ff88' : (batPct > 20 ? '#ffaa00' : '#ff3344');
+        batSvgPath = `<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="2"/>`;
+        batAreaPath = `<polygon points="0,${h} ${pts.join(' ')} ${((batteryChartHistory.length - 1) * step).toFixed(1)},${h}" fill="${col}" opacity="0.18"/>`;
+    }
+
+    function gaugeRing(pct, label, color) {
+        const r = 38, c = 2 * Math.PI * r;
+        const offset = c - (c * pct / 100);
+        return `
+        <div style="text-align:center;margin:0 14px">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+                <circle cx="45" cy="45" r="${r}" fill="none" stroke="#1a1f2e" stroke-width="7"/>
+                <circle cx="45" cy="45" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+                    stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+                    stroke-linecap="round" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 6px ${color})"/>
+                <text x="45" y="48" text-anchor="middle" fill="#fff" font-size="16" font-weight="800" font-family='Orbitron,monospace'>${pct}%</text>
+            </svg>
+            <div style="color:#8b95a8;font-size:10px;font-weight:700;letter-spacing:1.5px;margin-top:4px">${label}</div>
+        </div>`;
+    }
+
+    function barRow(label, value, maxVal, unit, color) {
+        const pct = maxVal > 0 ? Math.min((value / maxVal) * 100, 100) : 0;
+        return `
+        <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="color:#8b95a8;font-size:11px;font-weight:600;letter-spacing:1px">${label}</span>
+                <span style="color:#fff;font-size:12px;font-weight:700">${value} ${unit}</span>
+            </div>
+            <div style="height:8px;background:#1a1f2e;border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg,${color},${color}aa);border-radius:4px;transition:width 0.4s"></div>
+            </div>
+        </div>`;
+    }
+
+    const scoreColor = score > 80 ? '#00ff88' : (score > 50 ? '#00f3ff' : '#ff0055');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>APEX OVERDRIVE — Diagnostic Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#07090e;color:#c8d0de;font-family:'Rajdhani',sans-serif;padding:32px 24px;min-height:100vh}
+.report{max-width:780px;margin:0 auto}
+.hdr{text-align:center;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #1a2236}
+.hdr h1{font-family:'Orbitron',monospace;font-size:22px;color:#00f3ff;text-shadow:0 0 18px rgba(0,243,255,0.5);letter-spacing:3px}
+.hdr .sub{color:#5a6377;font-size:12px;letter-spacing:2px;margin-top:6px}
+.section{background:rgba(15,20,35,0.85);border:1px solid #1a2236;border-radius:12px;padding:24px;margin-bottom:20px}
+.section-title{font-family:'Orbitron',monospace;font-size:13px;color:#00f3ff;letter-spacing:2px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #1a2236}
+.gauges{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+.meta-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #111827}
+.meta-label{color:#5a6377;font-size:12px;font-weight:600;letter-spacing:1px}
+.meta-val{color:#fff;font-size:13px;font-weight:700}
+.spark-box{background:#0b0f18;border:1px solid #1a2236;border-radius:8px;padding:10px;margin-top:12px}
+.spark-label{color:#5a6377;font-size:10px;letter-spacing:1.5px;font-weight:700;margin-bottom:6px}
+.verdict{text-align:center;padding:20px;margin-top:8px}
+.verdict-tag{display:inline-block;padding:8px 24px;border-radius:9999px;font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px}
+.footer{text-align:center;color:#3a4255;font-size:10px;letter-spacing:1px;margin-top:24px}
+@media print{body{background:#fff;color:#222}.section{border-color:#ddd;background:#fafafa}.hdr h1{color:#0066cc;text-shadow:none}.section-title{color:#0066cc}}
+</style>
+</head>
+<body>
+<div class="report">
+    <div class="hdr">
+        <h1>⚡ APEX OVERDRIVE</h1>
+        <div class="sub">GAMING HARDWARE &amp; LATENCY DIAGNOSTIC REPORT</div>
+        <div style="color:#3a4255;font-size:11px;margin-top:8px">${ts} &nbsp;|&nbsp; ${osName.toUpperCase()} &nbsp;|&nbsp; ${timerStr}</div>
+    </div>
+
+    <!-- PERFORMANCE SCORE GAUGES -->
+    <div class="section">
+        <div class="section-title">⚡ PERFORMANCE GAUGES</div>
+        <div class="gauges">
+            ${gaugeRing(score, 'LATENCY INDEX', scoreColor)}
+            ${gaugeRing(cpuPct, 'CPU LOAD', cpuPct > 85 ? '#ff3344' : (cpuPct > 60 ? '#ffaa00' : '#00f3ff'))}
+            ${gaugeRing(memPct, 'RAM USAGE', memPct > 85 ? '#ff3344' : (memPct > 60 ? '#ffaa00' : '#00ff88'))}
+            ${gaugeRing(diskPct, 'DISK USED', diskPct > 90 ? '#ff3344' : '#8b5cf6')}
+            ${batPct !== null ? gaugeRing(batPct, 'BATTERY', batPct > 50 ? '#00ff88' : (batPct > 20 ? '#ffaa00' : '#ff3344')) : ''}
+        </div>
+    </div>
+
+    <!-- NETWORK LATENCY -->
+    <div class="section">
+        <div class="section-title">🌐 NETWORK LATENCY</div>
+        ${barRow('PING', ping, 100, 'ms', '#00f3ff')}
+        ${barRow('JITTER', jitter, 30, 'ms', '#8b5cf6')}
+        ${pingSvgPath ? `
+        <div class="spark-box">
+            <div class="spark-label">PING HISTORY WAVEFORM (${telemetryHistory.length} samples)</div>
+            <svg viewBox="0 0 440 60" width="100%" height="60" preserveAspectRatio="none">
+                <defs><linearGradient id="pingGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00f3ff"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs>
+                ${pingAreaPath}
+                ${pingSvgPath}
+            </svg>
+        </div>` : ''}
+    </div>
+
+    <!-- CPU & MEMORY -->
+    <div class="section">
+        <div class="section-title">🖥️ CPU &amp; MEMORY</div>
+        <div class="meta-grid">
+            <div class="meta-item"><span class="meta-label">PROCESSOR</span><span class="meta-val">${cpuModel}</span></div>
+            <div class="meta-item"><span class="meta-label">CORES</span><span class="meta-val">${cpuCores}</span></div>
+            <div class="meta-item"><span class="meta-label">CPU LOAD</span><span class="meta-val">${cpuPct}%</span></div>
+            <div class="meta-item"><span class="meta-label">TIMER RES</span><span class="meta-val">${timerStr.replace('TIMER: ','')}</span></div>
+            <div class="meta-item"><span class="meta-label">RAM USED</span><span class="meta-val">${memUsed} / ${memTotal} GB</span></div>
+            <div class="meta-item"><span class="meta-label">DISK USED</span><span class="meta-val">${diskUsed} / ${diskTotal} GB</span></div>
+        </div>
+        <div style="margin-top:14px">
+            ${barRow('CPU USAGE', cpuPct, 100, '%', cpuPct > 85 ? '#ff3344' : '#00f3ff')}
+            ${barRow('RAM USAGE', memPct, 100, '%', memPct > 85 ? '#ff3344' : '#00ff88')}
+            ${barRow('DISK USAGE', diskPct, 100, '%', diskPct > 90 ? '#ff3344' : '#8b5cf6')}
+        </div>
+    </div>
+
+    ${batPct !== null ? `
+    <!-- BATTERY & POWER -->
+    <div class="section">
+        <div class="section-title">🔋 BATTERY &amp; POWER</div>
+        <div class="meta-grid">
+            <div class="meta-item"><span class="meta-label">CHARGE</span><span class="meta-val">${batPct}%</span></div>
+            <div class="meta-item"><span class="meta-label">STATUS</span><span class="meta-val">${batStatus}</span></div>
+            <div class="meta-item"><span class="meta-label">POWER LINE</span><span class="meta-val">${batPower}</span></div>
+            <div class="meta-item"><span class="meta-label">VOLTAGE</span><span class="meta-val">${t.battery.voltageMV ? (t.battery.voltageMV / 1000).toFixed(2) + ' V' : '--'}</span></div>
+        </div>
+        ${batSvgPath ? `
+        <div class="spark-box" style="margin-top:12px">
+            <div class="spark-label">BATTERY DISCHARGE WAVEFORM (${batteryChartHistory.length} samples)</div>
+            <svg viewBox="0 0 440 60" width="100%" height="60" preserveAspectRatio="none">
+                ${batAreaPath}
+                ${batSvgPath}
+            </svg>
+        </div>` : ''}
+    </div>` : ''}
+
+    ${gpuName ? `
+    <!-- GPU & GRAPHICS -->
+    <div class="section">
+        <div class="section-title">🎮 GPU &amp; GRAPHICS</div>
+        <div class="meta-grid">
+            <div class="meta-item"><span class="meta-label">GPU</span><span class="meta-val">${gpuName}</span></div>
+            <div class="meta-item"><span class="meta-label">DRIVER</span><span class="meta-val">${gpuDriver}</span></div>
+            <div class="meta-item"><span class="meta-label">VRAM</span><span class="meta-val">${gpuVram} MB</span></div>
+            <div class="meta-item"><span class="meta-label">HAGS</span><span class="meta-val">${t.gpu.status}</span></div>
+        </div>
+    </div>` : ''}
+
+    <!-- VERDICT -->
+    <div class="section verdict">
+        <div class="verdict-tag" style="color:${scoreColor};border:2px solid ${scoreColor};box-shadow:0 0 20px ${scoreColor}44">
+            ${score >= 80 ? '🏆 TOURNAMENT READY' : (score >= 50 ? '✅ OPTIMIZED' : '⚠️ NEEDS TUNING')}  —  SCORE: ${score}/100
+        </div>
+        <div style="color:#5a6377;font-size:12px;margin-top:12px">
+            ${score >= 80 ? 'System is fully tuned for competitive eSports: sub-millisecond input response, zero frame drops, and ultra-low ping.' : (score >= 50 ? 'System is performing well. Consider running the Rust Deep Kernel for maximum timer resolution.' : 'System needs optimization. Run APEX OVERDRIVE full boost to unlock peak performance.')}
+        </div>
+    </div>
+
+    <div class="footer">
+        APEX OVERDRIVE v3.0 &nbsp;•&nbsp; Generated ${new Date().toLocaleString()} &nbsp;•&nbsp; github.com/alexhack235-code/APEX-OVERDRIVE-
+    </div>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ApexOverdrive_Report_${Date.now()}.json`;
+    a.download = `ApexOverdrive_Report_${Date.now()}.html`;
     a.click();
     URL.revokeObjectURL(url);
-    logToConsole('Exported hardware & latency benchmark report to JSON.', 'success');
+    playSound('complete');
+    logToConsole('📊 Exported rich visual diagnostic report (HTML with SVG gauges & waveforms).', 'success');
 });
 
 // ==========================================
