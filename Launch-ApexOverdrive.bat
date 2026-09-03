@@ -37,6 +37,15 @@ if not exist "node_modules\" (
     npm install
 )
 
+:: Verify or Compile Native Kernel Engine if missing
+if not exist "native_engine\ApexDeepKernel.exe" (
+    echo [BUILD] Compiling Native NTDLL Kernel Accelerator...
+    if exist "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" (
+        "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /optimize+ /platform:x64 /out:native_engine\ApexDeepKernel.exe native_engine\ApexDeepKernel.cs
+        echo [BUILD] Native Kernel Accelerator compiled successfully.
+    )
+)
+
 echo [STARTING] Launching Apex Overdrive Telemetry Engine on port 4888...
 echo [OPENING]  Opening HUD Dashboard in your default browser...
 

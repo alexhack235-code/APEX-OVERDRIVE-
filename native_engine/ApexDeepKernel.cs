@@ -54,10 +54,11 @@ namespace ApexKernel
                 if (a == "--timer-only") timerOnly = true;
             }
 
-            // Elevate Privileges (SE_INCREASE_QUOTA_NAME = 19, SE_PROF_SINGLE_PROCESS_NAME = 13)
-            bool en1, en2;
+            // Elevate Privileges (SE_INCREASE_QUOTA_NAME = 19, SE_PROF_SINGLE_PROCESS_NAME = 13, SE_SYSTEM_PROFILE_NAME = 28)
+            bool en1, en2, en3;
             RtlAdjustPrivilege(19, true, false, out en1);
             RtlAdjustPrivilege(13, true, false, out en2);
+            RtlAdjustPrivilege(28, true, false, out en3);
 
             if (purgeOnly)
             {
@@ -148,7 +149,8 @@ namespace ApexKernel
                     catch { }
                 }
 
-                return string.Format("Flushed Standby List (NT Status: {0}), Trimmed {1} working sets", status, trimmed);
+                string statusStr = (status == 0) ? "SUCCESS (0x00000000)" : string.Format("0x{0:X8}", (uint)status);
+                return string.Format("Flushed Standby List (NT Status: {0}), Trimmed {1} working sets", statusStr, trimmed);
             }
             catch (Exception ex)
             {

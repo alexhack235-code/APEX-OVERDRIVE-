@@ -45,7 +45,7 @@ fn execute_overdrive(json_mode: bool) {
     if !json_mode {
         println!("[4/4] Engaging ultra-precision kernel timer resolution...");
     }
-    let _timer_guard = timer::TimerGuard::enable_ultra_precision();
+    let _timer_guard = timer::TimerGuard::enable_ultra_precision(json_mode);
     let (max_t, min_t, cur_t) = timer::TimerGuard::query_resolution();
 
     if json_mode {
@@ -80,7 +80,7 @@ fn main() {
     }
 
     if is_timer {
-        let _guard = timer::TimerGuard::enable_ultra_precision();
+        let _guard = timer::TimerGuard::enable_ultra_precision(json_mode);
         let (_, _, cur_t) = timer::TimerGuard::query_resolution();
         if json_mode {
             println!("{{\"success\":true,\"os\":\"{}\",\"timer_ms\":{:.3}}}", get_os_name(), cur_t);
@@ -98,7 +98,7 @@ fn main() {
     execute_overdrive(json_mode);
 
     if is_daemon {
-        let _guard = timer::TimerGuard::enable_ultra_precision();
+        let _guard = timer::TimerGuard::enable_ultra_precision(json_mode);
         loop {
             thread::sleep(Duration::from_secs(60));
         }

@@ -44,6 +44,7 @@ pub fn purge_standby_list() -> Result<String, String> {
             let mut enabled: u8 = 0;
             RtlAdjustPrivilege(19, 1, 0, &mut enabled);
             RtlAdjustPrivilege(13, 1, 0, &mut enabled);
+            RtlAdjustPrivilege(28, 1, 0, &mut enabled); // SeSystemProfilePrivilege
 
             let command: u32 = 4; // MEMORY_PURGE_STANDBY_LIST
             let status = NtSetSystemInformation(
@@ -52,12 +53,12 @@ pub fn purge_standby_list() -> Result<String, String> {
                 std::mem::size_of::<u32>() as u32,
             );
 
-            trim_windows_working_sets();
+            let trimmed = trim_windows_working_sets();
 
             if status == 0 {
-                Ok("[RUST KERNEL - WINDOWS] Standby List Purged via NtSetSystemInformation(80, 4)".to_string())
+                Ok(format!("[RUST KERNEL - WINDOWS] Standby List Purged via NtSetSystemInformation(80, 4), Trimmed {} working sets", trimmed))
             } else {
-                Ok(format!("[RUST KERNEL - WINDOWS] Trimmed working sets (NT Status: {:#X})", status))
+                Ok(format!("[RUST KERNEL - WINDOWS] Trimmed {} working sets (NT Status: {:#010X})", trimmed, status as u32))
             }
         }
     }
@@ -100,7 +101,7 @@ fn trim_windows_working_sets() -> u32 {
             let num_pids = bytes_returned as usize / std::mem::size_of::<u32>();
             for &pid in &pids[..num_pids] {
                 if pid > 4 {
-                    let handle = OpenProcess(0x0400 | 0x0020, 0, pid);
+                    let handle = OpenProcess(0x0400 | 0x0100, 0, pid); // PROCESS_QUERY_INFORMATION | PROCESS_SET_QUOTA
                     if !handle.is_null() {
                         EmptyWorkingSet(handle);
                         CloseHandle(handle);

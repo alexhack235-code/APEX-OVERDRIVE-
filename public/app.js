@@ -930,10 +930,26 @@ btnLockCustomPriority.addEventListener('click', async () => {
     playSound('boost');
 });
 
+async function fetchEngineStatus() {
+    try {
+        const res = await fetch('/api/engine-status');
+        const data = await res.json();
+        if (data.available) {
+            logToConsole(`⚡ Native Kernel Accelerator connected (${data.type.toUpperCase()} on ${data.os})`, 'success');
+        }
+        const timerRes = await fetch('/api/timer-resolution');
+        const tData = await timerRes.json();
+        if (tData && tData.timer_ms) {
+            timerText.textContent = `TIMER: ${tData.timer_ms.toFixed(3)}ms (ULTRA)`;
+        }
+    } catch (e) {}
+}
+
 // Initialization
 window.addEventListener('DOMContentLoaded', () => {
     connectWebSocket();
     scanGames();
     drawCrosshairPreview();
     setEngineMode('rust');
+    fetchEngineStatus();
 });

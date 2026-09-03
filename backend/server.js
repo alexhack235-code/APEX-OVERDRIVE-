@@ -67,6 +67,25 @@ app.post('/api/boost/deep-rust', async (req, res) => {
     res.json(result);
 });
 
+app.get('/api/timer-resolution', async (req, res) => {
+    try {
+        const result = await optimizer.getTimerResolution();
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/engine-status', (req, res) => {
+    const engine = optimizer.getNativeKernelExecutable();
+    res.json({
+        available: !!engine,
+        type: engine ? engine.type : 'fallback',
+        path: engine ? engine.path : null,
+        os: process.platform === 'linux' ? 'Linux' : (process.platform === 'win32' ? 'Windows' : process.platform)
+    });
+});
+
 // Game Specific Presets
 app.post('/api/game-preset', async (req, res) => {
     const { gameTitle } = req.body;

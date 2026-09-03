@@ -27,16 +27,18 @@ pub struct TimerGuard {
 
 impl TimerGuard {
     /// Forces system timer resolution to 0.5ms on Windows, or 1ns timer slack on Linux
-    pub fn enable_ultra_precision() -> Self {
+    pub fn enable_ultra_precision(silent: bool) -> Self {
         #[cfg(target_os = "windows")]
         unsafe {
             timeBeginPeriod(1);
             let mut current: u32 = 0;
             let status = NtSetTimerResolution(5000, 1, &mut current);
-            if status == 0 {
-                println!("[RUST KERNEL] Windows Ultra-precision timer engaged: 0.500ms (5000 x 100ns)");
-            } else {
-                println!("[RUST KERNEL] Windows Fallback timer engaged: 1.000ms via timeBeginPeriod");
+            if !silent {
+                if status == 0 {
+                    println!("[RUST KERNEL] Windows Ultra-precision timer engaged: 0.500ms (5000 x 100ns)");
+                } else {
+                    println!("[RUST KERNEL] Windows Fallback timer engaged: 1.000ms via timeBeginPeriod");
+                }
             }
         }
 
@@ -46,10 +48,12 @@ impl TimerGuard {
             // Setting slack to 1ns eliminates kernel sleep jitter for gaming loops
             const PR_SET_TIMERSLACK: i32 = 29;
             let res = libc::prctl(PR_SET_TIMERSLACK, 1, 0, 0, 0);
-            if res == 0 {
-                println!("[RUST KERNEL] Linux Timer Slack minimized to 1ns via prctl(PR_SET_TIMERSLACK)");
-            } else {
-                println!("[RUST KERNEL] Linux High-Resolution Timer engaged");
+            if !silent {
+                if res == 0 {
+                    println!("[RUST KERNEL] Linux Timer Slack minimized to 1ns via prctl(PR_SET_TIMERSLACK)");
+                } else {
+                    println!("[RUST KERNEL] Linux High-Resolution Timer engaged");
+                }
             }
         }
 
