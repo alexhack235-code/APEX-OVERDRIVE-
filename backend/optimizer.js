@@ -805,6 +805,60 @@ async function restoreDefaults() {
     return res;
 }
 
+/**
+ * 17. Battery & Power Throttle Bypass for Laptop/Handheld Gaming
+ */
+async function toggleBatteryGamingMode(enable = true) {
+    if (IS_LINUX) {
+        if (enable) {
+            const cmd = `
+                for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+                    [ -f "$g" ] && echo performance > "$g"
+                done
+                echo "SUCCESS: Linux battery CPU governor set to performance."
+            `;
+            return await runCommand(cmd);
+        } else {
+            const cmd = `
+                for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+                    [ -f "$g" ] && echo powersave > "$g"
+                done
+                echo "SUCCESS: Linux battery CPU governor set to powersave."
+            `;
+            return await runCommand(cmd);
+        }
+    }
+
+    if (enable) {
+        const script = `
+            try {
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 100
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 0
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 0
+                powercfg -setactive SCHEME_CURRENT
+                Write-Output "SUCCESS: Unthrottled Battery Gaming Mode ACTIVATED. Windows DC power throttling disabled."
+            } catch {
+                Write-Error $_.Exception.Message
+            }
+        `;
+        return await runCommand(script);
+    } else {
+        const script = `
+            try {
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMIN 5
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 60
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PCIEXPRESS ASPM 2
+                powercfg -setactive SCHEME_CURRENT
+                Write-Output "SUCCESS: Eco Battery Saver Mode activated. Normal battery conservation restored."
+            } catch {
+                Write-Error $_.Exception.Message
+            }
+        `;
+        return await runCommand(script);
+    }
+}
+
 module.exports = {
     optimizeNetwork,
     optimizeCPU,
@@ -823,5 +877,6 @@ module.exports = {
     deepRustKernelOverdrive,
     getTimerResolution,
     getNativeKernelExecutable,
+    toggleBatteryGamingMode,
     restoreDefaults
 };

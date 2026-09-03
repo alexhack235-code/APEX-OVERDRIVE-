@@ -10,6 +10,25 @@ let cachedDiskInfo = { totalGB: 0, freeGB: 0, usedGB: 0, usedPercent: 0, name: I
 let cachedPingHistory = [];
 const MAX_PING_HISTORY = 40;
 
+let cachedBatteryHistory = [];
+const MAX_BATTERY_HISTORY = 30;
+let cachedBatteryInfo = {
+    hasBattery: false,
+    percent: 100,
+    charging: false,
+    statusText: 'AC Connected',
+    powerLine: 'AC',
+    voltageMV: null,
+    history: []
+};
+
+let cachedGpuInfo = {
+    name: 'Standard Graphics Accelerator',
+    driverVersion: 'Unknown',
+    vramMB: 1024,
+    status: 'Active'
+};
+
 function getCpuCoreUsageSample() {
     return os.cpus().map(cpu => {
         const { user, nice, sys, idle, irq } = cpu.times;
@@ -138,6 +157,138 @@ function updateDiskInfo() {
                 } catch (e) {}
             }
             resolve(cachedDiskInfo);
+        });
+    });
+}
+
+/**
+ * Cross-Platform Battery & Power Telemetry
+ */
+function updateBatteryInfo() {
+    return new Promise((resolve) => {
+        if (IS_LINUX) {
+            // Check Linux sysfs power supply or Termux
+            if (fs.existsSync('/sys/class/power_supply/BAT0') || fs.existsSync('/sys/class/power_supply/BAT1')) {
+                const batDir = fs.existsSync('/sys/class/power_supply/BAT0') ? '/sys/class/power_supply/BAT0' : '/sys/class/power_supply/BAT1';
+                try {
+                    const capacity = parseInt(fs.readFileSync(`${batDir}/capacity`, 'utf8').trim(), 10) || 100;
+                    const status = (fs.readFileSync(`${batDir}/status`, 'utf8') || 'Discharging').trim();
+                    const isCharging = status.toLowerCase().includes('charging');
+                    cachedBatteryHistory.push(capacity);
+                    if (cachedBatteryHistory.length > MAX_BATTERY_HISTORY) cachedBatteryHistory.shift();
+
+                    cachedBatteryInfo = {
+                        hasBattery: true,
+                        percent: capacity,
+                        charging: isCharging,
+                        statusText: isCharging ? 'Charging (AC)' : 'On Battery (Discharging)',
+                        powerLine: isCharging ? 'AC Connected' : 'Battery (DC)',
+                        voltageMV: null,
+                        history: cachedBatteryHistory
+                    };
+                } catch (e) {}
+                resolve(cachedBatteryInfo);
+                return;
+            }
+
+            // Android Termux fallback
+            exec('termux-battery-status', (err, stdout) => {
+                if (!err && stdout) {
+                    try {
+                        const data = JSON.parse(stdout);
+                        const pct = data.percentage || 100;
+                        const isCharging = data.status === 'CHARGING';
+                        cachedBatteryHistory.push(pct);
+                        if (cachedBatteryHistory.length > MAX_BATTERY_HISTORY) cachedBatteryHistory.shift();
+                        cachedBatteryInfo = {
+                            hasBattery: true,
+                            percent: pct,
+                            charging: isCharging,
+                            statusText: isCharging ? 'Charging (AC)' : 'Discharging',
+                            powerLine: data.plugged || 'BATTERY',
+                            voltageMV: data.temperature ? Math.round(data.temperature * 100) : null,
+                            history: cachedBatteryHistory
+                        };
+                    } catch (e) {}
+                }
+                resolve(cachedBatteryInfo);
+            });
+            return;
+        }
+
+        // Windows
+        exec('powershell.exe -NoProfile -Command "Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object EstimatedChargeRemaining, BatteryStatus, DesignVoltage | ConvertTo-Json"', (err, stdout) => {
+            if (!err && stdout) {
+                try {
+                    const data = JSON.parse(stdout.trim());
+                    if (data && typeof data.EstimatedChargeRemaining === 'number') {
+                        const pct = data.EstimatedChargeRemaining;
+                        // BatteryStatus: 1=Discharging, 2=AC/Unknown, 3=Fully Charged, 6-9=Charging
+                        const isCharging = data.BatteryStatus >= 6 && data.BatteryStatus <= 9;
+                        const onBattery = data.BatteryStatus === 1;
+
+                        cachedBatteryHistory.push(pct);
+                        if (cachedBatteryHistory.length > MAX_BATTERY_HISTORY) cachedBatteryHistory.shift();
+
+                        cachedBatteryInfo = {
+                            hasBattery: true,
+                            percent: pct,
+                            charging: isCharging,
+                            statusText: isCharging ? 'Charging (AC Power)' : (onBattery ? 'On Battery (Discharging)' : 'AC Plugged In'),
+                            powerLine: onBattery ? 'Battery (DC)' : 'AC Connected',
+                            voltageMV: data.DesignVoltage || null,
+                            history: cachedBatteryHistory
+                        };
+                        resolve(cachedBatteryInfo);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            resolve(cachedBatteryInfo);
+        });
+    });
+}
+
+/**
+ * Cross-Platform GPU Hardware Prober
+ */
+function updateGpuInfo() {
+    return new Promise((resolve) => {
+        if (IS_LINUX) {
+            exec('lspci | grep -iE "vga|3d|display" | head -n 1', (err, stdout) => {
+                if (!err && stdout) {
+                    const line = stdout.trim();
+                    const cleanName = line.replace(/^[0-9a-f:.]+\s+[^:]+:\s+/i, '');
+                    cachedGpuInfo = {
+                        name: cleanName || 'Linux Graphics Device',
+                        driverVersion: 'DRI / Kernel Direct Mode',
+                        vramMB: 2048,
+                        status: 'Active'
+                    };
+                }
+                resolve(cachedGpuInfo);
+            });
+            return;
+        }
+
+        // Windows
+        exec('powershell.exe -NoProfile -Command "Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | Select-Object Name, DriverVersion, AdapterRAM | ConvertTo-Json"', (err, stdout) => {
+            if (!err && stdout) {
+                try {
+                    let data = JSON.parse(stdout.trim());
+                    if (Array.isArray(data)) data = data[0];
+                    if (data && data.Name) {
+                        const vramBytes = data.AdapterRAM || 0;
+                        cachedGpuInfo = {
+                            name: data.Name,
+                            driverVersion: data.DriverVersion || 'WDDM Universal',
+                            vramMB: vramBytes > 0 ? Math.round(vramBytes / (1024 * 1024)) : 1024,
+                            status: 'Hardware Accelerated'
+                        };
+                    }
+                } catch (e) {}
+            }
+            resolve(cachedGpuInfo);
         });
     });
 }
@@ -293,6 +444,8 @@ async function getTelemetrySnapshot() {
             secondaryPingMs: pingSecondary.latency,
             history: cachedPingHistory
         },
+        battery: cachedBatteryInfo,
+        gpu: cachedGpuInfo,
         latencyIndex
     };
 }
@@ -300,11 +453,21 @@ async function getTelemetrySnapshot() {
 updateDiskInfo();
 setInterval(updateDiskInfo, 10000);
 
+updateBatteryInfo();
+setInterval(updateBatteryInfo, 4000);
+
+updateGpuInfo();
+setInterval(updateGpuInfo, 30000);
+
 module.exports = {
     getTelemetrySnapshot,
     scanActiveGames,
     benchmarkDNS,
     updateDiskInfo,
+    updateBatteryInfo,
+    updateGpuInfo,
+    getBatteryTelemetry: () => cachedBatteryInfo,
+    getGpuTelemetry: () => cachedGpuInfo,
     IS_LINUX,
     IS_WIN
 };

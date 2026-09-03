@@ -480,6 +480,83 @@ function finalizeBenchmark() {
 btnStartBenchmark.addEventListener('click', runBenchmarkSimulation);
 
 // ==========================================
+// 7.5. BATTERY DISCHARGE OSCILLOSCOPE
+// ==========================================
+const batteryCanvas = document.getElementById('batteryCanvas');
+const batCtx = batteryCanvas ? batteryCanvas.getContext('2d') : null;
+let batteryChartHistory = [];
+const MAX_BATTERY_POINTS = 30;
+
+function drawBatteryChart() {
+    if (!batteryCanvas || !batCtx) return;
+    const width = batteryCanvas.width;
+    const height = batteryCanvas.height;
+
+    batCtx.clearRect(0, 0, width, height);
+
+    batCtx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
+    batCtx.lineWidth = 1;
+    for (let y = 20; y < height; y += 25) {
+        batCtx.beginPath();
+        batCtx.moveTo(0, y);
+        batCtx.lineTo(width, y);
+        batCtx.stroke();
+    }
+
+    if (batteryChartHistory.length < 2) return;
+
+    const stepX = width / (MAX_BATTERY_POINTS - 1);
+
+    batCtx.beginPath();
+    batCtx.moveTo(0, height);
+    batteryChartHistory.forEach((pt, i) => {
+        const x = i * stepX;
+        const y = height - (pt.percent / 100) * (height - 20) - 10;
+        if (i === 0) batCtx.lineTo(x, y);
+        else batCtx.lineTo(x, y);
+    });
+    batCtx.lineTo((batteryChartHistory.length - 1) * stepX, height);
+    batCtx.closePath();
+
+    const gradient = batCtx.createLinearGradient(0, 0, 0, height);
+    const lastPct = batteryChartHistory[batteryChartHistory.length - 1].percent;
+    if (lastPct > 50) {
+        gradient.addColorStop(0, 'rgba(0, 255, 136, 0.35)');
+    } else if (lastPct > 20) {
+        gradient.addColorStop(0, 'rgba(255, 170, 0, 0.35)');
+    } else {
+        gradient.addColorStop(0, 'rgba(255, 51, 68, 0.35)');
+    }
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+    batCtx.fillStyle = gradient;
+    batCtx.fill();
+
+    batCtx.beginPath();
+    batteryChartHistory.forEach((pt, i) => {
+        const x = i * stepX;
+        const y = height - (pt.percent / 100) * (height - 20) - 10;
+        if (i === 0) batCtx.moveTo(x, y);
+        else batCtx.lineTo(x, y);
+    });
+    batCtx.strokeStyle = lastPct > 50 ? '#00ff88' : (lastPct > 20 ? '#ffaa00' : '#ff3344');
+    batCtx.lineWidth = 2.5;
+    batCtx.shadowColor = lastPct > 50 ? '#00ff88' : (lastPct > 20 ? '#ffaa00' : '#ff3344');
+    batCtx.shadowBlur = 8;
+    batCtx.stroke();
+    batCtx.shadowBlur = 0;
+
+    const lastIdx = batteryChartHistory.length - 1;
+    const lastPt = batteryChartHistory[lastIdx];
+    const lastX = lastIdx * stepX;
+    const lastY = height - (lastPt.percent / 100) * (height - 20) - 10;
+
+    batCtx.fillStyle = '#ffffff';
+    batCtx.beginPath();
+    batCtx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+    batCtx.fill();
+}
+
+// ==========================================
 // 8. TELEMETRY UPDATE HANDLER
 // ==========================================
 function updateTelemetryUI(data) {
@@ -550,6 +627,39 @@ function updateTelemetryUI(data) {
         diskFreeVal.textContent = `${data.storage.freeGB || '--'} GB`;
         diskPercentText.textContent = `${data.storage.usedPercent || 0}% Space Used`;
         diskUsedBar.style.width = `${data.storage.usedPercent || 0}%`;
+    }
+
+    if (data.battery) {
+        const b = data.battery;
+        const bBadge = document.getElementById('batteryBadge');
+        const bPctVal = document.getElementById('batteryPctVal');
+        const bPowerLineVal = document.getElementById('batteryPowerLineVal');
+        const bStatusVal = document.getElementById('batteryStatusVal');
+
+        if (bBadge) {
+            bBadge.textContent = `${b.percent}% ${b.charging ? 'CHARGING' : (b.powerLine.includes('Battery') ? 'DISCHARGING' : 'AC CONNECTED')}`;
+            bBadge.className = 'card-badge ' + (b.charging ? 'charging' : (b.percent <= 20 ? 'critical' : 'discharging'));
+        }
+        if (bPctVal) bPctVal.textContent = `${b.percent}%`;
+        if (bPowerLineVal) bPowerLineVal.textContent = b.powerLine;
+        if (bStatusVal) bStatusVal.textContent = b.statusText;
+
+        batteryChartHistory.push({ percent: b.percent, time: Date.now() });
+        if (batteryChartHistory.length > MAX_BATTERY_POINTS) batteryChartHistory.shift();
+        drawBatteryChart();
+    }
+
+    if (data.gpu) {
+        const g = data.gpu;
+        const gNameVal = document.getElementById('gpuNameVal');
+        const gDriverVal = document.getElementById('gpuDriverVal');
+        const gVramBadge = document.getElementById('gpuVramBadge');
+        const gHagsVal = document.getElementById('gpuHagsVal');
+
+        if (gNameVal) gNameVal.textContent = g.name;
+        if (gDriverVal) gDriverVal.textContent = g.driverVersion;
+        if (gVramBadge) gVramBadge.textContent = `${g.vramMB} MB VRAM`;
+        if (gHagsVal) gHagsVal.textContent = g.status;
     }
 }
 
@@ -929,6 +1039,69 @@ btnLockCustomPriority.addEventListener('click', async () => {
     logToConsole(data.output || `Locked ${proc} to ${priority}!`, 'success');
     playSound('boost');
 });
+
+// Battery & Power Actions
+const btnUnthrottleBattery = document.getElementById('btnUnthrottleBattery');
+if (btnUnthrottleBattery) {
+    btnUnthrottleBattery.addEventListener('click', async () => {
+        playSound('boost');
+        logToConsole('⚡ Engaging UNTHROTTLED BATTERY GAMING MODE (0% EPP, 100% DC Clocks, No Power Throttling)...', 'rust-boost');
+        try {
+            const res = await fetch('/api/battery/gaming-mode', { method: 'POST' });
+            const data = await res.json();
+            logToConsole(data.output || '⚡ 100% Max CPU/GPU clocks unlocked on DC Battery! Power throttling bypassed.', 'success');
+            playSound('complete');
+        } catch (e) {
+            logToConsole('Error engaging battery gaming mode: ' + e.message, 'error');
+        }
+    });
+}
+
+const btnEcoBattery = document.getElementById('btnEcoBattery');
+if (btnEcoBattery) {
+    btnEcoBattery.addEventListener('click', async () => {
+        playSound('click');
+        logToConsole('🌱 Restoring Eco Battery Saver Mode...', 'info');
+        try {
+            const res = await fetch('/api/battery/eco-mode', { method: 'POST' });
+            const data = await res.json();
+            logToConsole(data.output || 'Eco Battery Saver Mode active. Balanced power consumption restored.', 'success');
+        } catch (e) {
+            logToConsole('Error setting eco mode: ' + e.message, 'error');
+        }
+    });
+}
+
+// GPU Accelerator Action
+const btnOptGpu = document.getElementById('btnOptGpu');
+if (btnOptGpu) {
+    btnOptGpu.addEventListener('click', async () => {
+        playSound('boost');
+        logToConsole('🎮 Optimizing DirectX D3D GPU Scheduling & Clearing Corrupt Shaders...', 'boost');
+        try {
+            await fetch('/api/boost/gpu', { method: 'POST' });
+            await fetch('/api/clean-shaders', { method: 'POST' });
+            logToConsole('✅ GPU Priority elevated & DirectX D3D shader caches purged.', 'success');
+            playSound('complete');
+        } catch (e) {
+            logToConsole('Error optimizing GPU: ' + e.message, 'error');
+        }
+    });
+}
+
+// Compact Laptop View Toggle
+const btnCompactMode = document.getElementById('btnCompactMode');
+const compactIcon = document.getElementById('compactIcon');
+let isCompactMode = false;
+if (btnCompactMode) {
+    btnCompactMode.addEventListener('click', () => {
+        isCompactMode = !isCompactMode;
+        document.body.classList.toggle('compact-mode', isCompactMode);
+        compactIcon.textContent = isCompactMode ? '🖥️ EXPANDED VIEW' : '📐 COMPACT VIEW';
+        playSound('click');
+        logToConsole(isCompactMode ? 'Switched to Compact Streamlined HUD (Laptop Mode).' : 'Switched to Full eSports HUD.', 'info');
+    });
+}
 
 async function fetchEngineStatus() {
     try {

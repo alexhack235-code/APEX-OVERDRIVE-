@@ -1,57 +1,46 @@
 @echo off
-:: ============================================================================
-:: APEX OVERDRIVE // ULTRA LOW-LATENCY & FPS KERNEL BOOSTER
-:: Automatically requests Administrator privileges and launches the HUD Dashboard
-:: ============================================================================
+title APEX OVERDRIVE — FPS BOOST ENGINE
+color 0A
 
-title APEX OVERDRIVE // KERNEL GAMING ACCELERATOR
-cd /d "%~dp0"
-
-:: Check for Administrative Privileges
+:: Auto-elevate to Admin
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ELEVATION] Requesting Administrator Privileges for Kernel Tweaks...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c \"\"%~dpnx0\"\"' -Verb RunAs"
+if %errorLevel% neq 0 (
+    echo [*] Requesting Administrator privileges...
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
 
-cls
-echo ============================================================================
-echo   APEX OVERDRIVE // ULTRA LOW-LATENCY & FPS KERNEL BOOSTER
-echo ============================================================================
-echo [STATUS] Running with elevated Windows Administrator Privileges.
+cd /d "%~dp0"
+
+echo ====================================================
+echo   APEX OVERDRIVE // ULTRA LOW-LATENCY FPS BOOSTER
+echo   Dual-Engine: Standard App + Deep Rust Kernel
+echo   Dashboard: http://localhost:4888
+echo ====================================================
 echo.
 
 :: Check Node.js
 where node >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [ERROR] Node.js was not found in PATH!
-    echo Please ensure Node.js is installed to run the local telemetry hub.
+if %errorLevel% neq 0 (
+    echo [ERROR] Node.js not found! Please install from https://nodejs.org
     pause
-    exit /b
+    exit /b 1
 )
 
-:: Install dependencies if node_modules is missing
-if not exist "node_modules\" (
-    echo [INIT] Installing required dependencies (express, ws)...
-    npm install
+:: Install dependencies if missing
+if not exist node_modules (
+    echo [*] Installing dependencies...
+    npm install --production
 )
 
-:: Verify or Compile Native Kernel Engine if missing
-if not exist "native_engine\ApexDeepKernel.exe" (
-    echo [BUILD] Compiling Native NTDLL Kernel Accelerator...
-    if exist "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" (
-        "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /optimize+ /platform:x64 /out:native_engine\ApexDeepKernel.exe native_engine\ApexDeepKernel.cs
-        echo [BUILD] Native Kernel Accelerator compiled successfully.
-    )
-)
+:: Auto-open browser after 2 seconds
+start /b cmd /c "timeout /t 2 >nul && start http://localhost:4888"
 
-echo [STARTING] Launching Apex Overdrive Telemetry Engine on port 4888...
-echo [OPENING]  Opening HUD Dashboard in your default browser...
-
-:: Open Browser after 1.5 seconds in background
-start /min powershell -NoProfile -Command "Start-Sleep -Seconds 2; Start-Process 'http://localhost:4888'"
-
-:: Start Node server
+:: AUTO-RESTART LOOP — server will never stay dead
+:RESTART_LOOP
+echo [ENGINE] Starting Apex Overdrive Server...
 node backend/server.js
-pause
+echo.
+echo [CRASH SHIELD] Server stopped unexpectedly — auto-restarting in 3 seconds...
+timeout /t 3 >nul
+goto RESTART_LOOP

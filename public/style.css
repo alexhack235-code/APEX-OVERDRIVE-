@@ -1470,3 +1470,69 @@ body {
         width: 100%;
     }
 }
+
+/* ==========================================================
+   BATTERY & LAPTOP TELEMETRY STYLES
+   ========================================================== */
+#batteryCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.battery-card .card-badge.charging {
+    background: rgba(0, 255, 136, 0.12);
+    color: var(--neon-green);
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.25);
+    animation: pulseGlow 1.5s infinite alternate;
+}
+
+.battery-card .card-badge.discharging {
+    background: rgba(255, 170, 0, 0.12);
+    color: var(--neon-amber);
+    border-color: rgba(255, 170, 0, 0.4);
+}
+
+.battery-card .card-badge.critical {
+    background: rgba(255, 51, 68, 0.15);
+    color: var(--neon-red);
+    border-color: var(--neon-red);
+    animation: pulseGlow 0.8s infinite alternate;
+}
+
+/* ==========================================================
+   COMPACT LAPTOP STREAMLINED MODE
+   ========================================================== */
+body.compact-mode .hud-container {
+    max-width: 980px;
+    padding: 14px 18px;
+}
+
+body.compact-mode .presets-section,
+body.compact-mode .game-launchpad-section,
+body.compact-mode .benchmark-card,
+body.compact-mode .arsenal-grid {
+    display: none;
+}
+
+body.compact-mode .hero-command-card {
+    padding: 20px 24px;
+    margin-bottom: 16px;
+}
+
+body.compact-mode .hero-title {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+body.compact-mode .hero-desc {
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+body.compact-mode .telemetry-grid {
+    gap: 14px;
+    margin-bottom: 16px;
+}
+

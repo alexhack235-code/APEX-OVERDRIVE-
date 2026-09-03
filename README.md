@@ -155,6 +155,10 @@ With a single click, Apex Overdrive eliminates OS queueing delays, unlocks sub-m
 ## 🛠️ Diagnostics & Gamer Arsenal
 
 * **📊 10-Second Hardware Stress Test**: Real-time canvas simulation calculating Average FPS, 1% Low FPS, 0.1% Low FPS, and Frame Time Jitter variance.
+* **🔋 Live Battery & Power Telemetry**: 60 FPS HTML5 canvas oscilloscope graphing battery discharge/charge rate, power line status (AC / DC Battery), voltage, and battery health.
+* **⚡ Unthrottled Laptop Battery Gaming**: 1-click override that forces 100% CPU/GPU clocks and disables Windows DC power throttling & battery saver FPS caps when gaming unplugged.
+* **🎮 GPU & Graphics Accelerator**: Real-time graphics card detection, driver tracking, dynamic VRAM allocation display, and DirectX D3D scheduling booster.
+* **📐 Compact Streamlined Laptop View**: 1-click header switcher between Full eSports HUD and ultra-compact side-by-side view for laptops and handhelds.
 * **🎯 In-Game Crosshair Overlay**: Interactive crosshair customization (reticle color, size, gap, center dot) with transparent projection for hipfire precision.
 * **🌐 Global DNS Benchmark**: Live round-trip latency benchmarking across Cloudflare (1.1.1.1), Google (8.8.8.8), Quad9 (9.9.9.9), Riot Direct, and Valve Steam SDR.
 * **🔒 Active Game Process Priority Locker**: Real-time process scanner allowing 1-click elevation of any running game to **RealTime** or **High** scheduling class.

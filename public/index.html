@@ -34,6 +34,9 @@
                 <button id="soundToggleBtn" class="cyber-btn-small" title="Toggle Tactical Audio FX">
                     <span id="soundIcon">🔊 SFX ON</span>
                 </button>
+                <button id="btnCompactMode" class="cyber-btn-small" title="Toggle Compact Laptop View">
+                    <span id="compactIcon">📐 COMPACT VIEW</span>
+                </button>
                 <button id="btnExportReport" class="cyber-btn-small" title="Export Latency & FPS Benchmark Diagnostic Report">
                     📥 EXPORT REPORT
                 </button>
@@ -404,6 +407,87 @@
                     <div class="card-actions">
                         <button id="btnOptCpu" class="module-action-btn">
                             ⚙️ UNPARK CORES & BOOST SCHEDULER
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 5: BATTERY & LAPTOP POWER MANAGEMENT -->
+            <div class="telemetry-card battery-card" id="batteryCard">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🔋</span>
+                        <span>BATTERY & POWER ANATOMY</span>
+                    </div>
+                    <div class="card-badge" id="batteryBadge">38% DISCHARGING</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">CHARGE LEVEL</span>
+                            <span class="stat-val glow-cyan" id="batteryPctVal">--%</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">POWER SOURCE</span>
+                            <span class="stat-val glow-amber" id="batteryPowerLineVal">--</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">STATUS</span>
+                            <span class="stat-val glow-green" id="batteryStatusVal">--</span>
+                        </div>
+                    </div>
+
+                    <div class="canvas-container">
+                        <canvas id="batteryCanvas" width="400" height="110"></canvas>
+                    </div>
+
+                    <div class="card-actions flex-row-actions">
+                        <button id="btnUnthrottleBattery" class="module-action-btn deep-rust-btn" style="flex: 2;">
+                            ⚡ UNTHROTTLE BATTERY GAMING
+                        </button>
+                        <button id="btnEcoBattery" class="cyber-btn-auto-clean" style="flex: 1;">
+                            🌱 ECO SAVER
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 6: GPU & GRAPHICS HARDWARE ACCELERATOR -->
+            <div class="telemetry-card gpu-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-icon">🎮</span>
+                        <span>GPU & GRAPHICS HARDWARE ACCELERATOR</span>
+                    </div>
+                    <div class="card-badge" id="gpuVramBadge">1024 MB VRAM</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-row">
+                        <div class="stat-box">
+                            <span class="stat-label">GRAPHICS PROCESSOR</span>
+                            <span class="stat-val glow-cyan" id="gpuNameVal" style="font-size: 14px;">Detecting...</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">DRIVER VERSION</span>
+                            <span class="stat-val glow-green" id="gpuDriverVal" style="font-size: 14px;">--</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">HARDWARE SCHEDULING</span>
+                            <span class="stat-val glow-magenta" id="gpuHagsVal">ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <div class="cpu-info-box">
+                        <span class="cpu-model-text" id="gpuInfoSubtext">DirectX D3D Hardware Acceleration Enabled</span>
+                        <div class="core-unpark-status">
+                            <span class="unpark-dot active"></span>
+                            <span>GPU PRIORITY: MAX</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button id="btnOptGpu" class="module-action-btn">
+                            🎮 OPTIMIZE GPU SCHEDULING & DVR
                         </button>
                     </div>
                 </div>

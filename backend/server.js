@@ -1,3 +1,13 @@
+// ============================================================
+//  APEX OVERDRIVE — CRASH SHIELD (keeps server alive forever)
+// ============================================================
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH SHIELD] Uncaught Exception caught — server staying alive:', err.message);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[CRASH SHIELD] Unhandled Promise Rejection caught — server staying alive:', reason);
+});
+
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -84,6 +94,26 @@ app.get('/api/engine-status', (req, res) => {
         path: engine ? engine.path : null,
         os: process.platform === 'linux' ? 'Linux' : (process.platform === 'win32' ? 'Windows' : process.platform)
     });
+});
+
+app.get('/api/battery', (req, res) => {
+    res.json(telemetry.getBatteryTelemetry());
+});
+
+app.get('/api/gpu', (req, res) => {
+    res.json(telemetry.getGpuTelemetry());
+});
+
+app.post('/api/battery/gaming-mode', async (req, res) => {
+    console.log('[API] ⚡ Toggling Unthrottled Battery Gaming Mode...');
+    const result = await optimizer.toggleBatteryGamingMode(true);
+    res.json(result);
+});
+
+app.post('/api/battery/eco-mode', async (req, res) => {
+    console.log('[API] 🌱 Restoring Eco Battery Saver Mode...');
+    const result = await optimizer.toggleBatteryGamingMode(false);
+    res.json(result);
 });
 
 // Game Specific Presets
